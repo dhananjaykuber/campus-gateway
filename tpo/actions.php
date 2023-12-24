@@ -26,6 +26,7 @@ if(isset($_POST['addCompany'])) {
     redirect("Could not register company. Please try again", "add-company.php", "error");
 }
 else if(isset($_POST['addJob'])) {
+    // TODO: need to send email/ notifications to the eligible students when the job is added
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $companyId = mysqli_real_escape_string($conn, $_POST['companyId']);
     $package = mysqli_real_escape_string($conn, $_POST['package']);

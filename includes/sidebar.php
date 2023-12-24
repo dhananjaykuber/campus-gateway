@@ -4,6 +4,8 @@
         ['title' => 'Home', 'url' => 'index.php', 'icon' => 'home' ],
         ['title' => 'Profile', 'url' => 'index.php', 'icon' => 'user' ],
     ];
+
+    $activePage = substr($_SERVER['SCRIPT_NAME'], strrpos($_SERVER['SCRIPT_NAME'], "/")+1);
 ?>
 
 <div class="flex h-full">
@@ -19,7 +21,7 @@
                         $icon = $link['icon'];
                     ?>
                         <li>
-                            <a href="<?php echo $url;?>" class="flex flex-row h-auto items-center w-full gap-x-4 text-base font-medium cursor-pointer hover:text-white transition text-neutral-400 py-1"> <i class="w-5 fa-solid <?php echo $icon;?>"></i> <?php echo $title;?></a>
+                            <a href="<?php echo $url;?>" class="flex flex-row h-auto items-center w-full gap-x-4 text-base font-medium cursor-pointer hover:text-white transition text-neutral-400 py-1 <?= $activePage == $url ? 'text-white': '' ?>"> <i class="w-5 fa-solid <?php echo $icon;?>"></i> <?php echo $title;?></a>
                         </li>
                     <?php
                     }

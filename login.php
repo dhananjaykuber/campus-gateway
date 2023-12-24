@@ -1,7 +1,6 @@
 <?php
     include("includes/header.php");
     include("includes/input.php");
-    include("functions/customFunctions.php");
 
     if(isset($_SESSION['auth'])) {
         $role = $_SESSION['role'];
