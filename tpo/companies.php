@@ -17,7 +17,7 @@
             if(mysqli_num_rows($companies) > 0) {
             ?>    
 
-            <table class="min-w-full text-left text-sm font-light">
+            <table class="min-w-full text-left text-sm font-light" id="companyTable">
                 <thead class="border-b font-medium border-neutral-600">
                     <tr>
                         <th scope="col" class="px-6 py-4">ID</th>
@@ -38,7 +38,9 @@
                                 <td class="whitespace-nowrap px-6 py-4"><?= $company['email']?></td>
                                 <td class="whitespace-nowrap px-6 py-4"><?= $company['contact_no']?></td>
                                 <td class="whitespace-nowrap px-6 py-4"><a href="edit-company.php?id=<?= $company['id']?>"><i class="fa-solid fa-pen-to-square"></i></a></td>
-                                <td class="whitespace-nowrap px-6 py-4"><i class="fa-solid fa-trash"></i></td>
+                                <td class="whitespace-nowrap px-6 py-4">
+                                    <button id="deleteCompany" value="<?= $company['id'];?>"><i class="fa-solid fa-trash"></i></button>    
+                                </td>
                             </tr>
                         <?php
                         }

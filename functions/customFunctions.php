@@ -10,6 +10,11 @@ function redirect($message, $url, $type='success') {
     exit;
 }
 
+function sendResponse($statusCode, $message) {
+    $response = ['status' => $statusCode, 'message' => $message];
+    return json_encode($response);
+}
+
 function getAll($table) {
     global $conn;
     

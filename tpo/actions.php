@@ -2,7 +2,6 @@
 
 session_start();
 
-include("../config/db.php");
 include("../functions/customFunctions.php");
 
 if(isset($_POST['addCompany'])) {
@@ -97,6 +96,90 @@ else if(isset($_POST['editJob'])) {
 
     mysqli_stmt_close($updateQueryStmt);
     redirect("Could not update job. Please try again", "edit-job.php", "error");
+}
+else if(isset($_POST['deleteJob'])) {
+    $jobId = $_POST['jobId'];
+    $role = $_SESSION['role'];
+
+    if($role == 1) {
+        try {
+            $jobExistQuery = "SELECT * FROM jobs WHERE id = $jobId";
+            $jobExistQueryRun = mysqli_query($conn, $jobExistQuery);
+            if(mysqli_num_rows($jobExistQueryRun) > 0) {
+                $deleteQuery = "DELETE FROM jobs WHERE id = $jobId";
+                $deleteQueryRun = mysqli_query($conn, $deleteQuery);
+                if($deleteQueryRun) {
+                    echo sendResponse(200, 'Job deleted successfully');
+                }
+                else {
+                    echo sendResponse(500, 'Could not delete job');
+                }
+            }
+            else {
+                echo sendResponse(401, 'Job not found');
+            }
+        } 
+        catch (Exception $e) {
+            echo sendResponse(500, 'Something went wrong. Try again later');
+        }
+    }
+    else {
+        echo sendResponse(401, 'Unauthorized access');
+    }
+}
+else if(isset($_POST['deleteCompany'])) {
+    $companyId = $_POST['companyId'];
+    $role = $_SESSION['role'];
+
+    // disable autocommit
+    mysqli_autocommit($conn, false);
+
+    if($role == 1) {
+        try {
+            // start transaction
+            mysqli_begin_transaction($conn);
+
+            $companyExistQuery = "SELECT * FROM companies WHERE id = $companyId";
+            $companyExistQueryRun = mysqli_query($conn, $companyExistQuery);
+            if(mysqli_num_rows($companyExistQueryRun) > 0) {
+                // delete all jobs related to company
+                $deleteJobsQuery = "DELETE FROM jobs WHERE company_id = $companyId";
+                $deleteJobsQueryRun = mysqli_query($conn, $deleteJobsQuery);
+                if($deleteJobsQueryRun) {
+                    $deleteCompanyQuery = "DELETE FROM companies WHERE id = $companyId";
+                    $deleteCompanyQueryRun = mysqli_query($conn, $deleteCompanyQuery);
+
+                    if($deleteCompanyQueryRun) {
+                        // commit all transactions if all queries succeed 
+                        mysqli_commit($conn);
+                        echo sendResponse(200, 'Company deleted successfully');
+                    }
+                    else {
+                        mysqli_rollback($conn);
+                        echo sendResponse(500, 'Could not delete company');
+                    }
+                }
+                else {
+                    mysqli_rollback($conn);
+                    echo sendResponse(500, 'Could not delete company');
+                }
+            }
+            else {
+                echo sendResponse(401, 'Company not found');
+            }
+        } 
+        catch (Exception $e) {
+            mysqli_rollback($conn);
+            echo sendResponse(500, 'Something went wrong. Try again later');
+        }
+        finally {
+            // enable autocommit
+            mysqli_autocommit($conn, true);
+        }
+    }
+    else {
+        echo sendResponse(401, 'Unauthorized access');
+    }
 }
 
 ?>

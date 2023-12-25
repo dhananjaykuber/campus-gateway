@@ -17,7 +17,7 @@
             if(mysqli_num_rows($jobs) > 0) {
             ?>    
 
-            <table class="min-w-full text-left text-sm font-light">
+            <table class="min-w-full text-left text-sm font-light" id="jobTable">
                 <thead class="border-b font-medium border-neutral-600">
                     <tr>
                         <th scope="col" class="px-6 py-4">ID</th>
@@ -46,7 +46,9 @@
                                 <td class="whitespace-nowrap px-6 py-4"><?= $job['hsc_or_diploma_grade']?></td>
                                 <td class="whitespace-nowrap px-6 py-4"><?= $job['current_grade']?></td>
                                 <td class="whitespace-nowrap px-6 py-4"><a href="edit-job.php?id=<?= $job['id'];?>"><i class="fa-solid fa-pen-to-square"></i></a></td>
-                                <td class="whitespace-nowrap px-6 py-4"><i class="fa-solid fa-trash"></i></td>
+                                <td class="whitespace-nowrap px-6 py-4">
+                                    <button id="deleteJob" value="<?= $job['id'];?>"><i class="fa-solid fa-trash"></i></button>    
+                                </td>
                             </tr>
                         <?php
                         }
