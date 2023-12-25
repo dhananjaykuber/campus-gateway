@@ -103,9 +103,9 @@ else if(isset($_POST['deleteJob'])) {
 
     if($role == 1) {
         try {
-            $jobExistQuery = "SELECT * FROM jobs WHERE id = $jobId";
-            $jobExistQueryRun = mysqli_query($conn, $jobExistQuery);
-            if(mysqli_num_rows($jobExistQueryRun) > 0) {
+            $jobExist = "SELECT * FROM jobs WHERE id = $jobId";
+            $jobExistRun = mysqli_query($conn, $jobExist);
+            if(mysqli_num_rows($jobExistRun) > 0) {
                 $deleteQuery = "DELETE FROM jobs WHERE id = $jobId";
                 $deleteQueryRun = mysqli_query($conn, $deleteQuery);
                 if($deleteQueryRun) {
