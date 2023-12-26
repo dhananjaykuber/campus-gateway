@@ -25,7 +25,7 @@ if(isset($_POST['addCompany'])) {
     redirect("Could not register company. Please try again", "add-company.php", "error");
 }
 else if(isset($_POST['addJob'])) {
-    // TODO: need to send email/ notifications to the eligible students when the job is added
+    // TODO: need to send email/ notifications to the eligible students when the job is added (also check for which chance)
     $title = mysqli_real_escape_string($conn, $_POST['title']);
     $companyId = mysqli_real_escape_string($conn, $_POST['companyId']);
     $package = mysqli_real_escape_string($conn, $_POST['package']);
@@ -37,17 +37,51 @@ else if(isset($_POST['addJob'])) {
     $hscOrDiplomaGrade = mysqli_real_escape_string($conn, $_POST['hscOrDiplomaGrade']);
     $currentGrade = mysqli_real_escape_string($conn, $_POST['currentGrade']);
 
+    mysqli_autocommit($conn, false);
+    mysqli_begin_transaction($conn);
+
     $insertQuery = "INSERT INTO jobs(title, company_id, package, required_skills, location, website, description, ssc_grade, hsc_or_diploma_grade, current_grade) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $insertQueryStmt = mysqli_prepare($conn, $insertQuery);
     mysqli_stmt_bind_param($insertQueryStmt, "ssssssssss", $title, $companyId, $package, $skills, $location, $website, $description, $sscGrade, $hscOrDiplomaGrade, $currentGrade);
 
     if(mysqli_stmt_execute($insertQueryStmt)) {
-        mysqli_stmt_close($insertQueryStmt);
-        redirect("Job registered successfully", "jobs.php");
+        $jobId = mysqli_insert_id($conn);
+
+        try {
+            // send notifications
+            $selectEligibleStudent = "SELECT i.user_id FROM information i JOIN jobs j ON i.ssc_grade >= j.ssc_grade AND i.hsc_or_diploma_grade >= j.hsc_or_diploma_grade AND i.current_grade >= j.current_grade WHERE j.id = ?";
+            $selectEligibleStudentStmt = mysqli_prepare($conn, $selectEligibleStudent);
+            mysqli_stmt_bind_param($selectEligibleStudentStmt, "i", $jobId);
+            mysqli_stmt_execute($selectEligibleStudentStmt);    
+            $selectEligibleStudentResult = mysqli_stmt_get_result($selectEligibleStudentStmt);
+
+            while ($row = mysqli_fetch_assoc($selectEligibleStudentResult)) {
+                $userId = $row['user_id'];
+                $notificationMessage = "New Registration: " . $title . ' (' . $package . ' LPA)';
+
+                $insertNotification = "INSERT INTO notifications (user_id, job_id, message) VALUES (?, ?, ?, ?)";
+                $insertNotificationStmt = mysqli_prepare($conn, $insertNotification);
+                mysqli_stmt_bind_param($insertNotificationStmt, "iiss", $userId, $jobId, $notificationMessage);
+                mysqli_stmt_execute($insertNotificationStmt);
+                mysqli_stmt_close($insertNotificationStmt);
+            }
+
+            mysqli_commit($conn);
+            mysqli_stmt_close($insertQueryStmt);
+            mysqli_autocommit($conn, true);
+            redirect("Job registered successfully", "jobs.php");
+        } 
+        catch (Error $e) {
+            mysqli_rollback($conn);
+            mysqli_autocommit($conn, true);
+            redirect("Could not register job. Please try again", "add-job.php", "error");
+        }
     }
-    
-    mysqli_stmt_close($insertQueryStmt);
-    redirect("Could not register job. Please try again", "add-job.php", "error");
+    else {
+        mysqli_stmt_close($insertQueryStmt);
+        mysqli_autocommit($conn, true);
+        redirect("Could not register job. Please try again", "add-job.php", "error");
+    }
 }
 else if(isset($_POST['editCompany'])) {
     $companyId = mysqli_real_escape_string($conn, $_POST['companyId']);
@@ -179,6 +213,33 @@ else if(isset($_POST['deleteCompany'])) {
     }
     else {
         echo sendResponse(401, 'Unauthorized access');
+    }
+}
+else if(isset($_POST['getApplicants'])) {
+    $jobId = $_POST['jobId'];
+
+    $selectApplicants = "SELECT u.*, a.id as application_id FROM applications a JOIN users u ON a.user_id = u.id WHERE a.job_id = ?";
+    $selectApplicantsStmt = mysqli_prepare($conn, $selectApplicants);
+    mysqli_stmt_bind_param($selectApplicantsStmt, "i", $jobId);
+    mysqli_stmt_execute($selectApplicantsStmt);
+    $result = mysqli_stmt_get_result($selectApplicantsStmt);
+
+    if($result) {
+        $applicants = [];
+
+        while ($row = mysqli_fetch_assoc($result)) {
+            $applicants[] = [
+                'userId' => $row['id'],
+                'applicationId' => $row['application_id'],
+                'name' => $row['name'],
+                'email' => $row['email'],
+            ];
+        }
+
+        echo sendDataWithResponse(200, $applicants);
+    }
+    else {
+        echo sendResponse("404", "Applicants not found");
     }
 }
 

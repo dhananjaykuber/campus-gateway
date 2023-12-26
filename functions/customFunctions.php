@@ -15,6 +15,11 @@ function sendResponse($statusCode, $message) {
     return json_encode($response);
 }
 
+function sendDataWithResponse($statusCode, $data) {
+    $response = ['status' => $statusCode, 'data' => $data];
+    return json_encode($response);
+}
+
 function getAll($table) {
     global $conn;
     
@@ -42,6 +47,16 @@ function getJobById($id) {
     return $selectQueryRun;
 }
 
+function getAppliedJobs($userId) {
+    global $conn;
+
+    $selectQuery = "SELECT a.id as application_id, j.*, c.name as company_name FROM applications a JOIN jobs j ON a.job_id = j.id JOIN companies c ON j.company_id = c.id WHERE a.user_id = $userId";
+    $selectQueryRun = mysqli_query($conn, $selectQuery);
+
+    return $selectQueryRun;
+}
+
+// TODO: while applying check the package gap and how many offers does user holds (max 2 offers and package gap 2 LPA)
 function checkEligibleForJob($userId, $jobId) {
     global $conn;
 
@@ -89,6 +104,15 @@ function getById($table, $id) {
     global $conn;
     
     $selectQuery = "SELECT * FROM $table WHERE id = $id";
+    $selectQueryRun = mysqli_query($conn, $selectQuery);
+    
+    return $selectQueryRun;
+}
+
+function getAllNotifications($userId) {
+    global $conn;
+    
+    $selectQuery = "SELECT * FROM notifications WHERE user_id = $userId";
     $selectQueryRun = mysqli_query($conn, $selectQuery);
     
     return $selectQueryRun;

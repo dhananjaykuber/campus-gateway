@@ -124,5 +124,20 @@ else if(isset($_POST['applyForJob'])) {
     mysqli_stmt_close($insertQueryStmt);
     redirect("Something went wrong. Try again later", "apply.php?jobId=$jobId");
 }
+else if(isset($_POST['deleteApplication'])) {
+    $applicationId = mysqli_real_escape_string($conn, $_POST['applicationId']);
+
+    $deleteQuery = "DELETE FROM applications WHERE id = ?";
+    $deleteQueryStmt = mysqli_prepare($conn, $deleteQuery);
+    mysqli_stmt_bind_param($deleteQueryStmt, "i", $applicationId);
+
+    if(mysqli_stmt_execute($deleteQueryStmt)) {
+        mysqli_stmt_close($deleteQueryStmt);
+        echo sendResponse(200, 'Application deleted successfully');
+        return;
+    }
+    mysqli_stmt_close($deleteQueryStmt);
+    echo sendResponse(500, 'Something went wrong. Please try again');
+}
 
 ?>
