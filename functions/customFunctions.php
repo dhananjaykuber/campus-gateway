@@ -104,6 +104,8 @@ function checkEligibleForJob($userId, $jobId) {
         return 2;
     }
 
+    // 
+
     // check for filter (package difference and no. offers user can hold)
     $filters = getAll("filters");
     $filterData = mysqli_fetch_array($filters);
