@@ -39,7 +39,7 @@ if(isset($_POST['signup'])) {
 
         // TODO: need to change this later (for now tpo/index.php -> need to be student/index.php)
 
-        redirect("User signed up successfully", "../tpo/index.php");
+        redirect("User signed up successfully", "../student/index.php");
     }
     else {
         redirect('Something went wrong. Please try again', '../signup.php', "error");

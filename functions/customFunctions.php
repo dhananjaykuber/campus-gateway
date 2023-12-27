@@ -121,7 +121,8 @@ function getAllNotifications($userId) {
 function getStudentProfile() {
     global $conn;
 
-    $selectQuery = "SELECT users.*, information.* FROM users LEFT JOIN information ON users.id = information.user_id";
+    $userId = $_SESSION['user']['userId'];
+    $selectQuery = "SELECT users.*, information.* FROM users LEFT JOIN information ON users.id = information.user_id WHERE users.id = $userId";
     $selectQueryRun = mysqli_query($conn, $selectQuery);
 
     return $selectQueryRun;

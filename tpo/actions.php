@@ -59,9 +59,9 @@ else if(isset($_POST['addJob'])) {
                 $userId = $row['user_id'];
                 $notificationMessage = "New Registration: " . $title . ' (' . $package . ' LPA)';
 
-                $insertNotification = "INSERT INTO notifications (user_id, job_id, message) VALUES (?, ?, ?, ?)";
+                $insertNotification = "INSERT INTO notifications (user_id, job_id, message) VALUES (?, ?, ?)";
                 $insertNotificationStmt = mysqli_prepare($conn, $insertNotification);
-                mysqli_stmt_bind_param($insertNotificationStmt, "iiss", $userId, $jobId, $notificationMessage);
+                mysqli_stmt_bind_param($insertNotificationStmt, "iis", $userId, $jobId, $notificationMessage);
                 mysqli_stmt_execute($insertNotificationStmt);
                 mysqli_stmt_close($insertNotificationStmt);
             }
@@ -218,7 +218,7 @@ else if(isset($_POST['deleteCompany'])) {
 else if(isset($_POST['getApplicants'])) {
     $jobId = $_POST['jobId'];
 
-    $selectApplicants = "SELECT u.*, a.id as application_id FROM applications a JOIN users u ON a.user_id = u.id WHERE a.job_id = ?";
+    $selectApplicants = "SELECT u.*, a.id AS application_id, i.* FROM applications a JOIN users u ON a.user_id = u.id LEFT JOIN information i ON u.id = i.user_id WHERE a.job_id = ?";
     $selectApplicantsStmt = mysqli_prepare($conn, $selectApplicants);
     mysqli_stmt_bind_param($selectApplicantsStmt, "i", $jobId);
     mysqli_stmt_execute($selectApplicantsStmt);
@@ -229,10 +229,21 @@ else if(isset($_POST['getApplicants'])) {
 
         while ($row = mysqli_fetch_assoc($result)) {
             $applicants[] = [
+                'jobId' => $jobId,
                 'userId' => $row['id'],
                 'applicationId' => $row['application_id'],
                 'name' => $row['name'],
                 'email' => $row['email'],
+                'gender' => $row['gender'],
+                'contactNo' => $row['contact_no'],
+                'sscGrade' => $row['ssc_grade'],
+                'hscOrDiplomaGrade' => $row['hsc_or_diploma_grade'],
+                'currentGrade' => $row['current_grade'],
+                'branch' => $row['branch'],
+                'github' => $row['github'],
+                'linkedin' => $row['linkedin'],
+                'portfolio' => $row['personal_portfolio'],
+                'resume' => $row['resume'],
             ];
         }
 
@@ -241,6 +252,138 @@ else if(isset($_POST['getApplicants'])) {
     else {
         echo sendResponse("404", "Applicants not found");
     }
+}
+else if(isset($_POST['offerJob'])) {
+    $jobId = $_POST['jobId'];
+    $userId = $_POST['userId'];
+
+    $offerExist = "SELECT * FROM offers WHERE user_id = ? AND job_id = ?";
+    $offerExistStmt = mysqli_prepare($conn, $offerExist);
+    mysqli_stmt_bind_param($offerExistStmt, "ii", $userId, $jobId);
+    mysqli_stmt_execute($offerExistStmt);
+    mysqli_stmt_store_result($offerExistStmt);
+
+    if(mysqli_stmt_num_rows($offerExistStmt) > 0) {
+        mysqli_stmt_close($offerExistStmt);
+        echo sendResponse(500, "Offer already alloted");
+        return;
+    }
+
+    $selectPackage = "SELECT package FROM jobs WHERE id = ?";
+    $selectPackageStmt = mysqli_prepare($conn, $selectPackage);
+    mysqli_stmt_bind_param($selectPackageStmt, "i", $jobId);
+    mysqli_stmt_execute($selectPackageStmt);
+    mysqli_stmt_store_result($selectPackageStmt);
+
+    if(mysqli_stmt_num_rows($selectPackageStmt) > 0) {
+        mysqli_stmt_bind_result($selectPackageStmt, $package); 
+        mysqli_stmt_fetch($selectPackageStmt);
+
+        $insertOffer = "INSERT INTO offers (user_id, job_id, package_offered) VALUES (?, ?, ?)";
+        $insertOfferStmt = mysqli_prepare($conn, $insertOffer);
+        mysqli_stmt_bind_param($insertOfferStmt, "iis", $userId, $jobId, $package);
+        mysqli_stmt_execute($insertOfferStmt);
+
+        mysqli_stmt_close($selectPackageStmt);
+        mysqli_stmt_close($insertOfferStmt);
+
+        echo sendResponse(200, "Offer alloted successfully");
+    }
+    else {
+        echo sendResponse(500, "Something went wrong. Try again later");
+    }
+}
+else if(isset($_POST['getOffers'])) {
+    $jobId = $_POST['jobId'];
+
+    $selectOffers = "SELECT u.id as users_id, u.*, i.*, j.*, o.id as offer_id FROM users u JOIN information i ON u.id = i.user_id JOIN offers o ON u.id = o.user_id JOIN jobs j ON o.job_id = j.id WHERE o.job_id = ?";
+    $selectOffersStmt = mysqli_prepare($conn, $selectOffers);
+    mysqli_stmt_bind_param($selectOffersStmt, "i", $jobId);
+    mysqli_stmt_execute($selectOffersStmt);
+    $result = mysqli_stmt_get_result($selectOffersStmt);
+
+    if($result) {
+        $offers = [];
+
+        while ($row = mysqli_fetch_assoc($result)) {
+            $offers[] = [
+                'offerId' => $row['offer_id'],
+                'userId' => $row['users_id'],
+                'name' => $row['name'],
+                'email' => $row['email'],
+                'gender' => $row['gender'],
+                'contactNo' => $row['contact_no'],
+                'sscGrade' => $row['ssc_grade'],
+                'hscOrDiplomaGrade' => $row['hsc_or_diploma_grade'],
+                'currentGrade' => $row['current_grade'],
+                'branch' => $row['branch'],
+                'jobTitle' => $row['title'],
+                'package' => $row['package'],
+                'github' => $row['github'],
+                'linkedin' => $row['linkedin'],
+                'portfolio' => $row['personal_portfolio'],
+                'resume' => $row['resume'],
+            ];
+        }
+
+        echo sendDataWithResponse(200, $offers);
+    }
+    else {
+        echo sendResponse("404", "Offers not found");
+    }
+}
+else if(isset($_POST['deleteOffer'])) {
+    $offerId = $_POST['offerId'];
+
+    $deleteQuery = "DELETE FROM offers WHERE id = $offerId";
+    $deleteQueryRun = mysqli_query($conn, $deleteQuery);
+
+    if($deleteQueryRun) {
+        echo sendResponse(200, 'Offer deleted successfully');
+    }
+    else {
+        echo sendResponse(500, 'Could not delete offer');
+    }
+}
+else if(isset($_POST['updateTPOProfile'])) {
+    $userId = $_POST['userId'];
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    echo $userId;
+    echo $name;
+    echo $email;
+    echo $password;
+
+    $updateQuery = "UPDATE users SET ";
+
+    if(!empty($password)) {
+        $updateQuery .= "email = ?, name = ?, password = ? WHERE id = ?";
+    }
+    else {
+        $updateQuery .= "email = ?, name = ? WHERE id = ?";
+    }
+
+    echo $updateQuery;
+
+    $updateQueryStmt = mysqli_prepare($conn, $updateQuery);
+
+    if(!empty($password)) {
+        mysqli_stmt_bind_param($updateQueryStmt, "sssi", $email, $name, $password, $userId);
+    }
+    else {
+        mysqli_stmt_bind_param($updateQueryStmt, "ssi", $email, $name, $userId);
+    }
+
+    mysqli_stmt_execute($updateQueryStmt);
+
+    if(mysqli_stmt_affected_rows($updateQueryStmt) > 0) {
+        mysqli_stmt_close($updateQueryStmt);
+        redirect("Profile updated successfully", "profile.php");
+    }
+
+    redirect("Something went wrong. Try again later", "profile.php");
 }
 
 ?>
