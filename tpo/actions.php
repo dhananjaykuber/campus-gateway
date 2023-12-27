@@ -383,7 +383,46 @@ else if(isset($_POST['updateTPOProfile'])) {
         redirect("Profile updated successfully", "profile.php");
     }
 
-    redirect("Something went wrong. Try again later", "profile.php");
+    redirect("Something went wrong. Try again later", "profile.php", "error");
+}
+else if(isset($_POST['updateFilter'])) {
+    $offers = $_POST['offers'];
+    $package = $_POST['package'];
+    $filterId = $_POST['filterId'];
+
+    $selectQuery = "SELECT * FROM filters";
+    $result = mysqli_query($conn, $selectQuery);
+
+    if($result) {
+        $count = mysqli_num_rows($result);
+
+        if($count > 0) {
+            $updateQuery = "UPDATE filters SET package_difference = ?, offers_count = ? WHERE id = ?";
+            $updateQueryStmt = mysqli_prepare($conn, $updateQuery);
+            mysqli_stmt_bind_param($updateQueryStmt, "sss", $package, $offers, $filterId);
+            mysqli_stmt_execute($updateQueryStmt);
+
+            if(mysqli_stmt_affected_rows($updateQueryStmt) > 0) {
+                mysqli_stmt_close($updateQueryStmt);
+
+                redirect("Filter updated successfully", "filters.php");
+            } else {
+                redirect("Something went wrong. Try again later", "filters.php", "error");
+            }
+        }
+        else {
+            $insertFilter = "INSERT INTO filters (package_difference, offers_count) VALUES (?, ?)";
+            $insertFilterStmt = mysqli_prepare($conn, $insertFilter);
+            mysqli_stmt_bind_param($insertFilterStmt, "ss", $package, $offers);
+            mysqli_stmt_execute($insertFilterStmt);
+            mysqli_stmt_close($insertFilterStmt);
+
+            redirect("Filter updated successfully", "filters.php");
+        }
+    }
+    else {
+        redirect("Something went wrong. Try again later", "filters.php", "error");
+    }
 }
 
 ?>

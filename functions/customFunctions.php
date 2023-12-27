@@ -56,25 +56,10 @@ function getAppliedJobs($userId) {
     return $selectQueryRun;
 }
 
-// TODO: while applying check the package gap and how many offers does user holds (max 2 offers and package gap 2 LPA)
-function checkEligibleForJob($userId, $jobId) {
+// dynamic eligibility checking
+function checkGradeEligibility($userId, $jobId) {
     global $conn;
-
-    // 0: not eligible
-    // 1: eligible
-    // 2 : already applied
-
-    // check application already registered
-    $applicationExist = "SELECT * FROM applications WHERE user_id = ? AND job_id = ?";
-    $applicationExistStmt = mysqli_prepare($conn, $applicationExist);
-    mysqli_stmt_bind_param($applicationExistStmt, "ii", $userId, $jobId);
-    mysqli_stmt_execute($applicationExistStmt);
-    mysqli_stmt_store_result($applicationExistStmt);
-
-    if(mysqli_stmt_num_rows($applicationExistStmt) > 0) {
-        return 2;
-    }
-
+    
     // select user's grades
     $selectUsersGradeQuery = "SELECT ssc_grade, hsc_or_diploma_grade, current_grade FROM information WHERE user_id = ?";
     $selectUsersGradeStmt = mysqli_prepare($conn, $selectUsersGradeQuery);
@@ -95,9 +80,66 @@ function checkEligibleForJob($userId, $jobId) {
 
     if($sscGrade >= $minSSCGrade && $hscOrDiplomaGrade >= $minHSCOrDiplomaGrade && $currentGrade >= $minCurrentGrade) {
         return 1;
-    }
+    } 
 
     return 0;
+}
+function checkEligibleForJob($userId, $jobId) {
+    global $conn;
+
+    // 0: not eligible
+    // 1: eligible
+    // 2: already applied
+    // 3: have max offers 
+    // 4: package difference not match
+
+    // check application already registered
+    $applicationExist = "SELECT * FROM applications WHERE user_id = ? AND job_id = ?";
+    $applicationExistStmt = mysqli_prepare($conn, $applicationExist);
+    mysqli_stmt_bind_param($applicationExistStmt, "ii", $userId, $jobId);
+    mysqli_stmt_execute($applicationExistStmt);
+    mysqli_stmt_store_result($applicationExistStmt);
+
+    if(mysqli_stmt_num_rows($applicationExistStmt) > 0) {
+        return 2;
+    }
+
+    // check for filter (package difference and no. offers user can hold)
+    $filters = getAll("filters");
+    $filterData = mysqli_fetch_array($filters);
+    // first check for in hand offers count
+    $selectInHandOffers = "SELECT * FROM offers WHERE user_id = $userId ORDER BY package_offered DESC";    
+    $selectInHandOffersResult = mysqli_query($conn, $selectInHandOffers);
+
+    // first: check count of offers that user has (must not be greater that 'offers_count')
+    if(mysqli_num_rows($selectInHandOffersResult) == $filterData['offers_count']) {  
+        return 3;
+    }
+    else if(mysqli_num_rows($selectInHandOffersResult) < 1) {
+        // second: check is it first application
+        return checkGradeEligibility($userId, $jobId);
+    } 
+    else {
+        // if not a first application
+
+        // third: check for package difference
+
+        // get max package hold by user
+        $maxPackageHold = mysqli_fetch_assoc($selectInHandOffersResult);
+
+        // get package offered by job
+        $selectJobPackage = "SELECT * FROM jobs WHERE id = $jobId";    
+        $selectJobPackageRun = mysqli_query($conn, $selectJobPackage);        
+        $selectJobPackageResult = mysqli_fetch_assoc($selectJobPackageRun);
+
+        // check the package difference matches
+        if($selectJobPackageResult['package'] >= ($maxPackageHold['package_offered'] + $filterData['package_difference'])) {
+            return checkGradeEligibility($userId, $jobId);
+        }
+        else {
+            return 4;
+        }
+    } 
 }
 
 function getById($table, $id) {

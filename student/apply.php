@@ -4,6 +4,13 @@
 
 <?php
 
+$errors = [
+    '0' => 'Not Eligible',
+    '2' => 'Already Applied',
+    '3' => 'You hold max offers',
+    '4' => 'Package difference does not match'
+];
+
 if(isset($_GET['jobId']) && empty($_GET['jobId']) || !isset($_GET['jobId'])) {
     redirect("Job not found", "jobs.php", "error");
 }
@@ -56,9 +63,9 @@ $eligibleToApply = checkEligibleForJob($userId, $jobId);
 
             <?php
             
-                if($eligibleToApply == 0) {
+                if($eligibleToApply == 0 || $eligibleToApply == 2 || $eligibleToApply == 3 || $eligibleToApply == 4) {
                 ?>
-                    <button disabled class="w-[200px] rounded-full bg-red-600 border border-transparent px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold hover:opacity-75 transition" type="submit" name="applyForJob">Not Eligible</button>
+                    <button disabled class="w-[300px] rounded-full bg-red-600 border border-transparent px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold hover:opacity-75 transition"><?= $errors[$eligibleToApply]; ?></button>
                 <?php
                 }
                 else if($eligibleToApply == 1) {
@@ -70,12 +77,6 @@ $eligibleToApply = checkEligibleForJob($userId, $jobId);
                     </form>
                 <?php
                 }
-                else if($eligibleToApply == 2) {
-                    ?>
-                        <button disabled class="w-[200px] rounded-full bg-red-600 border border-transparent px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50 text-white font-bold hover:opacity-75 transition" type="submit" name="applyForJob">Already applied</button>
-                    <?php
-                }
-
             ?>
         </div>
     <?php

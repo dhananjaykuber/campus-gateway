@@ -651,12 +651,24 @@ html {
   width: 100%;
 }
 
+.w-\[400px\]{
+  width: 400px;
+}
+
 .min-w-\[300px\]{
   min-width: 300px;
 }
 
 .min-w-full{
   min-width: 100%;
+}
+
+.min-w-\[200px\]{
+  min-width: 200px;
+}
+
+.max-w-\[400px\]{
+  max-width: 400px;
 }
 
 .flex-1{
@@ -931,6 +943,10 @@ html {
 
 .underline{
   text-decoration-line: underline;
+}
+
+.filter{
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
 .transition{

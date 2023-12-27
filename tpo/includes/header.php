@@ -11,6 +11,7 @@
         ['title' => 'Applications', 'url' => 'applications.php', 'icon' => 'fa-file' ],
         ['title' => 'Offers', 'url' => 'offers.php', 'icon' => 'fa-envelope-open-text' ],
         ['title' => 'Students', 'url' => 'students.php', 'icon' => 'fa-graduation-cap' ],
+        ['title' => 'Filters', 'url' => 'filters.php', 'icon' => 'fa-filter' ],
         ['title' => 'Profile', 'url' => 'profile.php', 'icon' => 'fa-user' ],
     ];
 ?>
