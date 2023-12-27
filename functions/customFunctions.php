@@ -104,8 +104,6 @@ function checkEligibleForJob($userId, $jobId) {
         return 2;
     }
 
-    // 
-
     // check for filter (package difference and no. offers user can hold)
     $filters = getAll("filters");
     $filterData = mysqli_fetch_array($filters);
@@ -142,6 +140,15 @@ function checkEligibleForJob($userId, $jobId) {
             return 4;
         }
     } 
+}
+
+function getOffersByUserId($userId) {
+    global $conn;
+
+    $selectQuery = "SELECT o.*, j.*, c.name as company_name FROM offers o JOIN jobs j ON o.job_id = j.id JOIN companies c ON j.company_id = c.id WHERE o.user_id = $userId ORDER BY o.package_offered DESC";
+    $selectQueryRun = mysqli_query($conn, $selectQuery);
+
+    return $selectQueryRun;
 }
 
 function getById($table, $id) {
